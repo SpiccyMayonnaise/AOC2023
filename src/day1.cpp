@@ -2,7 +2,7 @@
 #include <fstream>
 #include <cstdint>
 #include <array>
-#include "utils.h"
+#include <string>
 
 uint32_t findFirstDigit(const std::string& source, bool forwards) {
 	std::array<std::string, 9> digits = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
