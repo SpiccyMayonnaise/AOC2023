@@ -45,6 +45,7 @@ int main() {
 	std::ifstream inputStream{"./inputs/day2.txt", std::ios::in | std::ios::binary};
 
 	uint32_t sum = 0;
+	uint32_t powerSum = 0;
 
 	std::string line;
 	while (std::getline(inputStream, line)) {
@@ -81,8 +82,12 @@ int main() {
 		if (valid)
 			sum += gameID;
 
-		std::cout << "Game " << gameID << ": " << redCount << " red, " << greenCount << " green, " << blueCount << " blue. Decision: " << (valid ? "Valid" : "Invalid") << std::endl;
+		uint32_t power = redCount * greenCount * blueCount;
+		powerSum += power;
+
+		std::cout << "Game " << gameID << ": " << redCount << " red, " << greenCount << " green, " << blueCount << " blue. Decision: " << (valid ? "Valid" : "Invalid") << ". Power: " << power << std::endl;
 	}
 
 	std::cout << "Sum: " << sum << std::endl;
+	std::cout << "Power sum: " << powerSum << std::endl;
 }
