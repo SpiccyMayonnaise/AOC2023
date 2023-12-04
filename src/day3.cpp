@@ -43,47 +43,62 @@ std::tuple<bool, int32_t, size_t> nextNumber(const std::string& source, size_t& 
 }
 
 struct PartNumber {
-	size_t xPos;
-	size_t yPos;
-	size_t length;
+	int32_t xPos;
+	int32_t yPos;
+	int32_t length;
 	int32_t value;
+};
+
+struct Gear {
+	size_t numPartNumbers = 0;
+	int32_t gearRatio = 0;
 };
 
 bool isSymbol(char c) {
 	return !isDigit(c) && (c != '.') && (c != '\n') && (c != '\r');
 }
 
-bool checkPosition(size_t xPos, size_t yPos, const std::vector<std::string>& lines) {
+void addGear(const PartNumber& partNumber, Gear& gear) {
+	gear.numPartNumbers++;
+
+	if (gear.numPartNumbers > 2)
+		return;
+
+	if (gear.gearRatio == 0)
+		gear.gearRatio = partNumber.value;
+	else
+		gear.gearRatio *= partNumber.value;
+}
+
+bool checkPosition(int32_t xPos, int32_t yPos, const std::vector<std::string>& lines, const PartNumber& partNumber, std::vector<std::vector<Gear>>& gears) {
 	bool result = false;
 
-	if (xPos > 0) {
-		result |= isSymbol(lines[yPos][xPos - 1]);
-		if (yPos > 0)
-			result |= isSymbol(lines[yPos - 1][xPos - 1]);
-		if (yPos < lines.size() - 1)
-			result |= isSymbol(lines[yPos + 1][xPos - 1]);
-	}
+	if (xPos >= 0 && xPos < lines[0].length()) {
+		result |= isSymbol(lines[yPos][xPos]);
 
-	if (yPos > 0)
-		result |= isSymbol(lines[yPos - 1][xPos]);
-	if (yPos < lines.size() - 1)
-		result |= isSymbol(lines[yPos + 1][xPos]);
+		if (lines[yPos][xPos] == '*')
+			addGear(partNumber, gears[yPos][xPos]);
 
+		if (yPos > 0) {
+			result |= isSymbol(lines[yPos - 1][xPos]);
 
-	if (xPos < lines[0].length() - 1) {
-		result |= isSymbol(lines[yPos][xPos + 1]);
-		if (yPos > 0)
-			result |= isSymbol(lines[yPos - 1][xPos + 1]);
-		if (yPos < lines.size() - 1)
-			result |= isSymbol(lines[yPos + 1][xPos + 1]);
+			if (lines[yPos - 1][xPos] == '*')
+				addGear(partNumber, gears[yPos - 1][xPos]);
+		}
+		if (yPos < lines.size() - 1) {
+			result |= isSymbol(lines[yPos + 1][xPos]);
+
+			if (lines[yPos + 1][xPos] == '*')
+				addGear(partNumber, gears[yPos + 1][xPos]);
+		}
 	}
 
 	return result;
 }
 
-bool isPartNumber(PartNumber partNumber, const std::vector<std::string>& lines) {
-	for (size_t i = 0; i < partNumber.length; ++i) {
-		if (checkPosition(partNumber.xPos + i, partNumber.yPos, lines))
+bool isPartNumber(const PartNumber& partNumber, const std::vector<std::string>& lines, std::vector<std::vector<Gear>>& gears) {
+	for (int32_t i = -1; i <= partNumber.length; ++i) {
+		if (checkPosition(partNumber.xPos + i, partNumber.yPos, lines, partNumber, gears))
 			return true;
 	}
 
@@ -95,11 +110,13 @@ int main() {
 
 	std::vector<PartNumber> partNumbers;
 	std::vector<std::string> lines;
+	std::vector<std::vector<Gear>> gears;
 
 	size_t lineNumber = 0;
 	std::string line;
 	while (std::getline(inputStream, line)) {
 		lines.push_back(line);
+		gears.emplace_back(line.length());
 
 		size_t pos = 0;
 
@@ -109,7 +126,7 @@ int main() {
 			foundNumber = found;
 
 			if (found)
-				partNumbers.push_back({.xPos = startPos, .yPos = lineNumber, .length = pos - startPos, .value = value});
+				partNumbers.push_back({.xPos = static_cast<int32_t>(startPos), .yPos = static_cast<int32_t>(lineNumber), .length = static_cast<int32_t>(pos - startPos), .value = value});
 		}
 
 		lineNumber++;
@@ -118,7 +135,7 @@ int main() {
 	int32_t sum = 0;
 
 	for (auto partNumber : partNumbers) {
-		bool valid = isPartNumber(partNumber, lines);
+		bool valid = isPartNumber(partNumber, lines, gears);
 
 		std::cout << partNumber.value << ": " << valid << std::endl;
 
@@ -126,5 +143,15 @@ int main() {
 			sum += partNumber.value;
 	}
 
+	int32_t gearRatioSum = 0;
+
+	for (auto gearVector : gears) {
+		for (auto gear : gearVector) {
+			if (gear.numPartNumbers == 2)
+				gearRatioSum += gear.gearRatio;
+		}
+	}
+
 	std::cout << sum << std::endl;
+	std::cout << gearRatioSum << std::endl;
 }
